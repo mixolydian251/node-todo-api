@@ -1,5 +1,8 @@
     const express = require('express');
     const bodyParser = require('body-parser');
+    const {ObjectID} = require('mongodb');
+
+    const port = process.env.PORT || 3000;
 
     var {mongoose} = require('./db/mongoose');
     var {Todo} = require('./models/todo');
@@ -42,6 +45,25 @@
         })
     });
 
+    app.get('/todos/:id', (req, res) => {
+        var id = req.params.id;
+        if (!ObjectID.isValid(id)){
+            res.status(404).send('Invalid id')
+        } else {
+
+            Todo.findById(id).then((todo) => {
+                if (!todo){
+                    throw new Error('No matching item was found');
+                } else {
+                    res.send(todo);
+                    console.log('Item was found')}
+            }).catch((error) => {
+                res.status(400).send();
+                console.log(error)
+            })
+        }
+    });
+
     app.get('/users', (req, res) => {
         User.find().then((users) => {
             res.send({users});
@@ -50,8 +72,8 @@
         })
     });
 
-    app.listen(3000, () => {
-        console.log('Started on port 3000');
+    app.listen(port, () => {
+        console.log(`server is up on port ${port}`);
     });
 
     module.exports = {app};
