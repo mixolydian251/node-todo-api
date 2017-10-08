@@ -1,6 +1,7 @@
     const express = require('express');
     const bodyParser = require('body-parser');
     const {ObjectID} = require('mongodb');
+    const hbs = require('hbs');
 
     const port = process.env.PORT || 3000;
 
@@ -11,6 +12,14 @@
     var app = express();
 
     app.use(bodyParser.json());
+
+    // hbs.registerPartials(__dirname + '/views/partials');
+    app.set('view engine', 'hbs');
+    app.use(express.static(__dirname + '/public'));
+
+    app.get('/', (req, res) => {
+        res.render('home.hbs')
+    });
 
     app.post('/users', (req, res) => {
         var user = new User({
