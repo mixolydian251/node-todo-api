@@ -65,7 +65,43 @@
                     throw new Error('No matching item was found');
                 } else {
                     res.send(todo);
-                    console.log('Item was found')}
+                    console.log('Item was found', JSON.stringify(todo, undefined, 4))}
+
+            }).catch((error) => {
+                res.status(400).send();
+                console.log(error)
+            })
+        }
+    });
+
+    app.delete('/users/:email', (req, res) => {
+        var email_address = req.params.email;
+
+        User.findOneAndRemove({email: email_address}).then((user) => {
+            if (!user){
+                throw new Error(`There was no entry matching the email address \"${email_address}\".`)
+            } else {
+                res.send(user);
+                console.log('Removed the following entry: \n', user)
+            }
+        }).catch((error) => {
+            res.status(404).send();
+            console.log(error)
+        })
+    });
+
+    app.delete('/todos/:id', (req, res) => {
+        var id = req.params.id;
+        if (!ObjectID.isValid(id)){
+            res.status(404).send('Invalid id')
+        } else {
+
+            Todo.findOneAndRemove(id).then((todo) => {
+                if (!todo){
+                    throw new Error('No matching item was found');
+                } else {
+                    res.send(todo);
+                    console.log('Item was removed')}
             }).catch((error) => {
                 res.status(400).send();
                 console.log(error)
