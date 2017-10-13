@@ -34,7 +34,7 @@ var UserSchema = new mongoose.Schema({
 
 
 
-// Adds instance methods to Schema
+// '.methods' adds instance methods to Schema
 UserSchema.methods.toJSON = function () {
     var user = this;
     var userObject = user.toObject();
@@ -64,6 +64,28 @@ UserSchema.methods.generateAuthToken = function () {
     return user.save().then(() => {
         return token;
     })
+};
+
+ // '.statics' adds model methods to schema
+UserSchema.statics.findByToken = function (token) {
+    var User = this;
+    var decoded;
+
+    try {
+        decoded = jwt.verify(token, 'abc123')
+    } catch(err) {
+        return new Promise((resolve, reject) => {
+            reject('Authentication Error')
+        })
+    }
+
+    return User.findOne({
+        _id: decoded._id,
+        // This is how to query nested properties
+        'tokens.token': token,
+        'tokens.access': 'auth'
+
+    });
 };
 
 var User = mongoose.model('User', UserSchema );
