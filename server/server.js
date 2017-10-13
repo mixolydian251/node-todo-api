@@ -1,3 +1,6 @@
+
+
+
     const express = require('express');
     const bodyParser = require('body-parser');
     const {ObjectID} = require('mongodb');
@@ -5,6 +8,7 @@
 
     const port = process.env.PORT || 3000;
 
+    var config = require('./config/config');
     var {mongoose} = require('./db/mongoose');
     var {Todo} = require('./models/todo');
     var {User} = require('./models/user');
@@ -19,31 +23,6 @@
 
     app.get('/', (req, res) => {
         res.render('home.hbs')
-    });
-
-    app.post('/users', (req, res) => {
-        var user = new User({
-            name: req.body.name,
-            email: req.body.email
-        });
-
-        user.save().then((doc) => {
-            res.status(201).send(doc)
-        }).catch((error) => {
-            res.status(418).send(error);
-        })
-    });
-
-    app.post('/todos', (req, res) => {
-        var todo = new Todo({
-            text: req.body.text
-        });
-
-        todo.save().then((doc) => {
-            res.send(doc);
-        }).catch((error) => {
-            res.status(400).send(error);
-        })
     });
 
     app.get('/todos', (req, res) => {
@@ -73,6 +52,34 @@
             })
         }
     });
+
+    app.post('/users', (req, res) => {
+        var user = new User({
+            name: req.body.name,
+            email: req.body.email
+        });
+
+        user.save().then((doc) => {
+            res.status(201).send(doc)
+        }).catch((error) => {
+            res.status(418).send(error);
+        })
+    });
+
+    app.post('/todos', (req, res) => {
+        var todo = new Todo({
+            text: req.body.text
+        });
+        console.log(req.body.toArray());
+
+        todo.save().then((doc) => {
+            res.send(doc);
+        }).catch((error) => {
+            res.status(400).send(error);
+        })
+    });
+
+
 
     app.delete('/users/:email', (req, res) => {
         var email_address = req.params.email;
@@ -114,6 +121,31 @@
             res.send({users});
         }).catch((error) => {
             res.status(400).send(error);
+        })
+    });
+
+    app.patch('/todos/:id', (req, res) => {
+        var id = req.params.id;
+        var body = req.body;
+        if (!ObjectID.isValid(id)){
+            return res.status(404).send('Invalid id')
+        } if (body.completed && body.completed === 'true'){
+            body.completedAt = new Date().getTime();
+            body.completed = true;
+        } else {
+            body.completed = false;
+            body.completedAt = null
+        }
+
+        Todo.findByIdAndUpdate(id, {
+            $set: {
+                completedAt: body.completedAt,
+                completed: body.completed
+            }
+        }).then((todo) => {
+            res.send({todo});
+        }).catch((err) => {
+            res.status(400).send(err)
         })
     });
 
