@@ -1,6 +1,4 @@
 
-
-
     const express = require('express');
     const bodyParser = require('body-parser');
     const {ObjectID} = require('mongodb');
@@ -25,6 +23,9 @@
         res.render('home.hbs')
     });
 
+/////////////////////Todos////////////////////////////
+
+ // Get all
     app.get('/todos', (req, res) => {
         Todo.find().then((todos) => {
             res.send({todos});
@@ -32,7 +33,7 @@
             res.status(400).send(error);
         })
     });
-
+ // Get by Id
     app.get('/todos/:id', (req, res) => {
         var id = req.params.id;
         if (!ObjectID.isValid(id)){
@@ -53,19 +54,6 @@
         }
     });
 
-    app.post('/users', (req, res) => {
-        var user = new User({
-            name: req.body.name,
-            email: req.body.email
-        });
-
-        user.save().then((doc) => {
-            res.status(201).send(doc)
-        }).catch((error) => {
-            res.status(418).send(error);
-        })
-    });
-
     app.post('/todos', (req, res) => {
         var todo = new Todo({
             text: req.body.text
@@ -76,24 +64,6 @@
             res.send(doc);
         }).catch((error) => {
             res.status(400).send(error);
-        })
-    });
-
-
-
-    app.delete('/users/:email', (req, res) => {
-        var email_address = req.params.email;
-
-        User.findOneAndRemove({email: email_address}).then((user) => {
-            if (!user){
-                throw new Error(`There was no entry matching the email address \"${email_address}\".`)
-            } else {
-                res.send(user);
-                console.log('Removed the following entry: \n', user)
-            }
-        }).catch((error) => {
-            res.status(404).send();
-            console.log(error)
         })
     });
 
@@ -116,14 +86,6 @@
         }
     });
 
-    app.get('/users', (req, res) => {
-        User.find().then((users) => {
-            res.send({users});
-        }).catch((error) => {
-            res.status(400).send(error);
-        })
-    });
-
     app.patch('/todos/:id', (req, res) => {
         var id = req.params.id;
         var body = req.body;
@@ -136,7 +98,6 @@
             body.completed = false;
             body.completedAt = null
         }
-
         Todo.findByIdAndUpdate(id, {
             $set: {
                 completedAt: body.completedAt,
@@ -148,6 +109,48 @@
             res.status(400).send(err)
         })
     });
+
+/////////////////////////Users///////////////////////////
+
+    app.get('/users', (req, res) => {
+        User.find().then((users) => {
+            res.send({users});
+        }).catch((error) => {
+            res.status(400).send(error);
+        })
+    });
+
+    app.post('/users', (req, res) => {
+        var user = new User({
+            email: req.body.email,
+            password: req.body.password,
+        });
+        user.save().then(() => {
+            return user.generateAuthToken();
+        }).then((token) => {
+            res.header('x-auth', token).send(user)
+        }).catch((error) => {
+            res.status(400).send(error);
+        })
+    });
+
+    app.delete('/users/:email', (req, res) => {
+        var email_address = req.params.email;
+
+        User.findOneAndRemove({email: email_address}).then((user) => {
+            if (!user){
+                throw new Error(`There was no entry matching the email address \"${email_address}\".`)
+            } else {
+                res.send(user);
+                console.log('Removed the following entry: \n', user)
+            }
+        }).catch((error) => {
+            res.status(404).send();
+            console.log(error)
+        })
+    });
+
+
 
     app.listen(port, () => {
         console.log(`server is up on port ${port}`);
